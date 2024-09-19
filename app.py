@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
 from typing import List, Tuple
-
-from nicegui import app, ui
 import random
 from random import randint
+
+from nicegui import app, ui
+
 
 from word_list import adjectives, nouns
 
 messages: List[Tuple[str, str, str, str]] = []
-user_id = None
 
 
 def generate_username():
@@ -39,20 +39,15 @@ def chat_messages(own_id: str) -> None:
     ui.run_javascript("window.scrollTo(0, document.body.scrollHeight)")
 
 
-async def change_display_name():
-    user_id = generate_username()
-    user_cache = app.storage.user
-    user_cache["uuid"] = user_id
-    await ui.refresh()
-
-
 @ui.page("/")
 async def main():
-    async def change_display_name():
-        user_id = generate_username()
-        user_cache = app.storage.user
-        user_cache["uuid"] = user_id
+    user_id = None
+
+    def reset_username():
         ui.navigate.reload()
+
+    if not user_id:
+        user_id = generate_username()
 
     with ui.dialog() as dialog:
         with ui.card().props("rounded outlined").classes(
@@ -75,7 +70,7 @@ async def main():
                 )
                 cancel_link = ui.button("Cancel").classes("bg-transparent ")
     ok_button.on("click", dialog.close)
-    ok_button.on("click", change_display_name)
+    ok_button.on("click", reset_username)
     cancel_link.on("click", dialog.close)
 
     ui.html(
@@ -87,13 +82,6 @@ async def main():
         messages.append((user_id, avatar, text.value, stamp))
         text.value = ""
         chat_messages.refresh()
-
-    user_cache = app.storage.user
-    if "uuid" in user_cache:
-        user_id = user_cache["uuid"]
-    else:
-        user_id = generate_username()
-        user_cache["uuid"] = user_id
 
     avatar = f"https://avatar.iran.liara.run/public/boy?username={user_id}"
 
@@ -126,9 +114,15 @@ async def main():
             )
 
     await ui.context.client.connected()
+
     with ui.column().classes("w-full max-w-2xl mx-auto items-stretch"):
         chat_messages(user_id)
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="Chat", dark=True, storage_secret="chat")
+    ui.run(
+        title="Chat",
+        dark=True,
+        storage_secret="chat",
+        on_air="zpKKlYDGuIZcbUKd",
+    )
