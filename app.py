@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple
 from uuid import uuid4
 
@@ -22,7 +22,7 @@ def chat_messages(own_id: str) -> None:
 @ui.page("/")
 async def main():
     def send() -> None:
-        stamp = datetime.utcnow().strftime("%X")
+        stamp = datetime.now(timezone.utc).strftime("%X")
         messages.append((user_id, avatar, text.value, stamp))
         text.value = ""
         chat_messages.refresh()
@@ -33,11 +33,14 @@ async def main():
     ui.add_css(
         r"a:link, a:visited {color: inherit !important; text-decoration: none; font-weight: 500}"
     )
-    with ui.footer().classes("bg-white"), ui.column().classes(
+    with ui.footer().style("background-color:#121212"), ui.column().classes(
         "w-full max-w-3xl mx-auto my-6"
     ):
         with ui.row().classes("w-full no-wrap items-center"):
-            with ui.avatar().on("click", lambda: ui.navigate.to(main)):
+            with ui.avatar().on("click", lambda: ui.navigate.to(main)).style(
+                "cursor: pointer"
+            ):
+                ui.tooltip("Change user")
                 ui.image(avatar)
             text = (
                 ui.input(placeholder="message")
@@ -52,4 +55,4 @@ async def main():
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="Chat")
+    ui.run(title="Chat", dark=True)
