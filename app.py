@@ -18,8 +18,7 @@ def generate_username():
     adj = adjectives[adj_key]
     noun = nouns[noun_key]
 
-    username = f"{adj}{noun}#" + str(randint(0000, 9999))
-
+    username = f"{adj}{noun}#" + str(randint(1000, 9998))
     return username
 
 
@@ -40,8 +39,49 @@ def chat_messages(own_id: str) -> None:
     ui.run_javascript("window.scrollTo(0, document.body.scrollHeight)")
 
 
+async def change_display_name():
+    user_id = generate_username()
+    user_cache = app.storage.user
+    user_cache["uuid"] = user_id
+    await ui.refresh()
+
+
 @ui.page("/")
 async def main():
+    async def change_display_name():
+        user_id = generate_username()
+        user_cache = app.storage.user
+        user_cache["uuid"] = user_id
+        ui.navigate.reload()
+
+    with ui.dialog() as dialog:
+        with ui.card().props("rounded outlined").classes(
+            "flex-grow shadow-lg shadow-blue-300/50 rounded-full"
+        ):
+            with ui.column():
+                with ui.row():
+                    ui.icon("info").classes("text-2xl text-blue-500")
+                    ui.label("Reroll User").classes("text-lg font-bold")
+                ui.label(
+                    "This is an anonymous chat. Either way, you can change your display whenever you want. However your old messages will still be tied to your old ID."
+                )
+                ui.html(
+                    "<span class='text-l'>IMPORTANT:</span><br/>This action will generate a new ID, and you will lose your ties to previous messages."
+                ).classes("text-red-500")
+
+            with ui.button_group():
+                ok_button = (
+                    ui.button("Got it!").props("rounded").style("cursor: pointer")
+                )
+                cancel_link = ui.button("Cancel").classes("bg-transparent ")
+    ok_button.on("click", dialog.close)
+    ok_button.on("click", change_display_name)
+    cancel_link.on("click", dialog.close)
+
+    ui.html(
+        '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">'
+    )
+
     def send() -> None:
         stamp = datetime.now(timezone.utc).strftime("%H:%M")
         messages.append((user_id, avatar, text.value, stamp))
@@ -55,24 +95,31 @@ async def main():
         user_id = generate_username()
         user_cache["uuid"] = user_id
 
-    avatar = f"https://robohash.org/{user_id}?bgset=bg&set=set4"
+    avatar = f"https://avatar.iran.liara.run/public/boy?username={user_id}"
 
+    # CSS for linka
     ui.add_css(
         r"a:link, a:visited {color: inherit !important; text-decoration: none; font-weight: 500}"
     )
-    with ui.row(align_items="center").classes("w-full p-4 bg-gray-800"):
-        ui.label(f"{user_id}").style("font-size: 2rem")
+    # CSS recived message background color
+    ui.add_css(
+        r".q-message-text--received{background-color: silver}.q-message-text--received:last-child:before{right:100%;border-right:0 solid transparent;border-left:8px solid transparent;border-bottom:8px solid silver}.q-message-name--sent::before  {color: #f1f1f1; content: 'You ';font-size: 13px;;visibility: visible} .q-message-name--sent  {font-size: 0;visibility: hidden}"
+    )
+    # CSS sent message background color
+    ui.add_css(
+        r".q-message-text--sent{color: dodgerblue;border-radius:4px 4px 0 4px; background-image: linear-gradient(to right top, #d16ba5, #c777b9, #ba83ca, #aa8fd8, #9a9ae1, #8aa7ec, #79b3f4, #69bff8, #52cffe, #41dfff, #46eefa, #5ffbf1);background-image: linear-gradient(to bottom, #d16ba5, #c777b9, #ba83ca, #aa8fd8, #9a9ae1, #8aa7ec, #79b3f4, #69bff8, #52cffe, #41dfff, #46eefa, #5ffbf1);background-image: linear-gradient(to left top, #d16ba5, #c777b9, #ba83ca, #aa8fd8, #9a9ae1, #8aa7ec, #79b3f4, #69bff8, #52cffe, #41dfff, #46eefa, #5ffbf1);}.q-message-text--sent:last-child:before{left:100%;border-left:0 solid transparent;border-right:8px solid transparent;border-bottom:8px solid #D16BA5}"
+    )
     with ui.footer().style("background-color:#121212"), ui.column().classes(
         "w-full max-w-3xl mx-auto my-6"
     ):
         with ui.row().classes("w-full no-wrap items-center"):
-            with ui.avatar().on("click", lambda: ui.navigate.to(main)).style(
-                "cursor: pointer"
-            ):
-                ui.tooltip("Reload")
+            with ui.avatar().on("click", dialog.open).style("cursor: pointer"):
+                ui.tooltip(f"Change user").props(
+                    "transition-show=flip-left transition-hide=flip-right"
+                )
                 ui.image(avatar)
             text = (
-                ui.input(placeholder="message")
+                ui.input(placeholder="Write a message...")
                 .on("keydown.enter", send)
                 .props("rounded outlined input-class=mx-3")
                 .classes("flex-grow shadow-lg shadow-blue-300/50 rounded-full")
