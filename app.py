@@ -69,7 +69,7 @@ async def main():
             with ui.avatar().on("click", lambda: ui.navigate.to(main)).style(
                 "cursor: pointer"
             ):
-                ui.tooltip("Change user")
+                ui.tooltip("Reload")
                 ui.image(avatar)
             text = (
                 ui.input(placeholder="message")
